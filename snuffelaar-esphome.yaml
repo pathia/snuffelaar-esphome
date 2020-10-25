@@ -1,0 +1,106 @@
+esphome:
+  name: snuffelaar
+  platform: ESP32
+  board: lolin32
+  #Fix for Neopixel library bug. https://github.com/esphome/issues/issues/1481
+  platformio_options:
+    lib_deps: NeoPixelBus@2.6.0
+
+wifi:
+  ssid: !secret iot_ssid
+  password: !secret iot_ssid_passphrase
+  manual_ip:
+   static_ip: 192.168.5.126
+   subnet: 255.255.255.0
+   gateway: 192.168.5.254
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+#web_server:
+#  port: 80
+
+ota:
+
+dallas:
+  - pin: 04
+
+uart:
+  - rx_pin: 22
+    tx_pin: 21
+    baud_rate: 9600
+    id: uart0
+  - rx_pin: 25
+    tx_pin: 32
+    baud_rate: 9600
+    id: uart1
+
+i2c:
+  sda: 23
+  scl: 13
+  scan: True
+  id: bus_a
+  
+sensor:
+  - platform: dallas
+    address: 0x8254E062E0F0FF28
+    name: "DS18B20 temperature"
+  - platform: mhz19
+    co2:
+      name: "MH-Z19 CO2 Value"
+    temperature:
+      name: "MH-Z19 Temperature"
+    update_interval: 60s
+    automatic_baseline_calibration: false
+    uart_id: uart0
+  - platform: pmsx003
+    type: PMSX003
+    pm_1_0:
+      name: "PMSX003 Particulate Matter <1.0µm Concentration"
+      filters:
+        - or:
+          - throttle: 60s
+          - delta: 2
+          - heartbeat: 300s
+    pm_2_5:
+      name: "PMSX003 Particulate Matter <2.5µm Concentration"
+      filters:
+        - or:
+          - throttle: 60s
+          - delta: 2
+          - heartbeat: 300s
+    pm_10_0:
+      name: "PMSX003 Particulate Matter <10.0µm Concentration"
+      filters:
+        - or:
+          - throttle: 60s
+          - delta: 2
+          - heartbeat: 300s
+    uart_id: uart1
+
+  - platform: bme280
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 16x
+    pressure:
+      name: "BME280 Pressure"
+    humidity:
+      name: "BME280 Humidity"
+    address: 0x76
+    update_interval: 60s
+light:
+  - platform: neopixelbus
+    variant: SK6812
+    type: GRBW
+    pin: 26
+    num_leds: 1
+    name: "NeoPixel Light "
+switch:
+  - platform: gpio
+    pin:
+      number: 15
+      mode: INPUT_PULLUP
+    name: "button"
